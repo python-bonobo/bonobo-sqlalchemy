@@ -1,20 +1,155 @@
 import datetime
 import threading
 import traceback
+from collections import Sequence
 from queue import Queue
 
 from sqlalchemy import MetaData, Table
 from toolz import memoize
 
-from bonobo_sqlalchemy.constants import SELECT, INSERT, UPDATE
-
 from bonobo import ErrorBag
-from bonobo.util.lifecycle import with_context
 from bonobo.core.contexts import ComponentExecutionContext
+from bonobo.util.contextprocessors import Contextual, ContextProcessor
+from bonobo.util.lifecycle import with_context
+from bonobo.util.options import Configurable, Option
+from bonobo_sqlalchemy.constants import INSERT, UPDATE
 
 
 class ProhibitedOperationError(Exception):
     pass
+
+
+class DatabaseInsertOrUpdate(Contextual, Configurable):
+    """
+    xxx todo fields vs columns, choose a name
+    """
+    engine = Option(required=True)
+    table_name = Option(type=str, required=True)
+    fetch_columns = Option(type=Sequence, default=())
+    insert_only_fields = Option(type=Sequence, default=())
+    discriminant = Option(type=Sequence, default=('id',))
+    created_at_field = Option(type=str, default='created_at')
+    updated_at_field = Option(type=str, default='updated_at')
+    allowed_operations = Option(type=Sequence, default=(INSERT, UPDATE,))
+    buffer_size = Option(type=int, default=1000)
+
+    @ContextProcessor
+    def create_connection(self):
+        with self.engine.connect() as connection:
+            yield connection
+
+    @ContextProcessor
+    def create_buffer(self, connection):
+        buffer = Queue()
+        yield buffer
+        self.commit(connection, buffer, force=True)
+
+    def __call__(self, connection, buffer, row):
+        buffer.put(row)
+        yield from self.commit()
+
+    def commit(self, connection, buffer, force=False):
+        if force or buffer.qsize() >= self.buffer_size:
+            with connection.begin():
+                while buffer.qsize() > 0:
+                    try:
+                        yield self.insert_or_update(buffer.get())
+                    except Exception as exc:
+                        yield ErrorBag(exc, traceback.format_exc())
+
+    def insert_or_update(self, row):
+        """Actual database load transformation logic, without the buffering / transaction logic.
+
+        """
+
+        # find line, if it exist
+        # TODO XXX use actual database function instead of this stupid thing
+        now = datetime.datetime.now()
+
+        # introspect column names
+        # XXX todo move somewhere where it's only called once.
+        column_names = self.component.columns
+        discriminant = self.component.discriminant
+        allowed_operations = self.component.allowed_operations
+
+        # UpdatedAt field configured ? Let's set the value in source hash
+        if self.updated_at_field in column_names:
+            row[self.updated_at_field] = now  # XXX not pure ...
+        # Otherwise, make sure there is no such field
+        elif self.updated_at_field in row:
+            del row[self.updated_at_field]  # XXX why ?
+
+        # FIND
+        row = self.find(row)
+
+        # UPDATE
+        if row:
+            if not UPDATE in allowed_operations:
+                raise ProhibitedOperationError('UPDATE operations are not allowed by this transformation.')
+
+            _columns = self.component.get_columns_for(row, row)
+
+            query = 'UPDATE {table} SET {values} WHERE {criteria}'.format(
+                table=self.component.table_name,
+                values=', '.join(
+                    ('{column} = ?'.format(column=_column) for _column in _columns if not _column in discriminant)
+                ),
+                criteria=' AND '.join(('{key} = ?'.format(key=_key) for _key in discriminant))
+            )
+            values = [row[_column] for _column in _columns if not _column in discriminant] + \
+                     [row[_column] for _column in discriminant]
+
+        # INSERT
+        else:
+            if not INSERT in allowed_operations:
+                raise ProhibitedOperationError('INSERT operations are not allowed by this transformation.')
+
+            if self.created_at_field in column_names:
+                row[self.created_at_field] = now
+            else:
+                if self.created_at_field in row:
+                    del row[self.created_at_field]
+
+            _columns = self.get_columns_for(row)
+            query = 'INSERT INTO {table} ({keys}) VALUES ({values})'.format(
+                table=self.table_name, keys=', '.join(_columns), values=', '.join(['?'] * len(_columns))
+            )
+            values = [row[key] for key in _columns]
+
+        # Execute
+        connection.execute(query, values)
+
+        # Increment stats TODO
+        # if row:
+        #    self._output._special_stats[UPDATE] += 1
+        # else:
+        #    self._output._special_stats[INSERT] += 1
+
+        # If user required us to fetch some columns, let's query again to get their actual values.
+        if self.fetch_columns and len(self.fetch_columns):
+            if not row:
+                row = self.find(row)
+            if not row:
+                raise ValueError('Could not find matching row after load.')
+
+            for alias, column in self.fetch_columns.items():
+                row[alias] = row[column]
+
+        return row
+
+    def find(self, dataset, connection=None):
+        query = 'SELECT * FROM {table} WHERE {criteria} LIMIT 1'.format(
+            table=self.table_name,
+            criteria=' AND '.join([key_atom + ' = ?' for key_atom in self.discriminant]),
+        )
+        rp = connection.execute(
+            query, [dataset.get(key_atom) for key_atom in self.discriminant]
+        )
+
+        # Increment stats TODO
+        # self._input._special_stats[SELECT] += 1
+
+        return rp.fetchone()
 
 
 @with_context
@@ -23,7 +158,7 @@ class DatabaseWriter:
     table_name = None
     fetch_columns = None
     insert_only_fields = ()
-    discriminant = ('id', )
+    discriminant = ('id',)
     created_at_field = 'created_at'
     updated_at_field = 'updated_at'
     allowed_operations = (
@@ -32,15 +167,15 @@ class DatabaseWriter:
     )
 
     def __init__(
-        self,
-        engine=None,
-        table_name=None,
-        fetch_columns=None,
-        discriminant=None,
-        created_at_field=None,
-        updated_at_field=None,
-        insert_only_fields=None,
-        allowed_operations=None
+            self,
+            engine=None,
+            table_name=None,
+            fetch_columns=None,
+            discriminant=None,
+            created_at_field=None,
+            updated_at_field=None,
+            insert_only_fields=None,
+            allowed_operations=None
     ):
 
         self.engine = engine or self.engine
@@ -107,8 +242,8 @@ class DatabaseWriter:
 
     def add_fetch_columns(self, *columns, **aliased_columns):
         self.fetch_columns = {
-            ** self.fetch_columns,
-            ** aliased_columns,
+            **self.fetch_columns,
+            **aliased_columns,
         }
 
         for column in columns:

@@ -9,7 +9,7 @@ from sqlalchemy import Table
 from sqlalchemy import Text
 from sqlalchemy import create_engine
 
-from bonobo import console_run, pprint
+from bonobo import console_run, PrettyPrint
 from bonobo.core.strategies.executor import ThreadCollectionStrategy
 from bonobo_sqlalchemy import DatabaseWriter
 
@@ -51,6 +51,6 @@ console_run(
     DatabaseWriter(
         engine_factory, 'lorem', discriminant=('name', )
     ),
-    pprint(),
+    PrettyPrint(),
     strategy=ThreadCollectionStrategy
 )
