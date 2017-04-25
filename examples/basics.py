@@ -14,7 +14,8 @@ import json
 
 from blessings import Terminal
 
-from bonobo import console_run, Tee, JsonWriter
+from bonobo import console_run, JsonWriter
+from bonobo.basics import Tee
 from bonobo.ext.opendatasoft import from_opendatasoft_api
 
 try:

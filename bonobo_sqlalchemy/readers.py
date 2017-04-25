@@ -1,4 +1,9 @@
-class DatabaseReader:
+from bonobo.config import Option
+from bonobo.config.configurables import Configurable
+from bonobo.config.services import Service
+
+
+class DatabaseReader(Configurable):
     """
     Extract data from a database using some raw SQL and yield one output line per query result.
 
@@ -16,18 +21,13 @@ class DatabaseReader:
 
     """
 
-    query = 'SELECT 1'
-    pack_size = 1000
+    engine = Service(default='sqlalchemy.engine') # type: sqlalchemy.engine
 
-    def __init__(self, engine, query=None, limit=None):
-        self.engine = engine
-        try:
-            self.query = query or self.query
-        except AttributeError as e:
-            pass
-        self.limit = limit
+    query: str = Option(str, required=True, default='SELECT 1')
+    pack_size: int = Option(int, default=1000)
+    limit: int = Option(int)
 
-    def extract(self):
+    def extract(self, engine):
         query = self.query.strip()
         if query[-1] == ';':
             query = query[0:-1]

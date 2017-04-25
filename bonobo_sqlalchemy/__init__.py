@@ -1,8 +1,8 @@
 from .constants import INSERT, SELECT, UPDATE
-from .writers import DatabaseWriter
+from .writers import InsertOrUpdate
 
 __all__ = [
-    'DatabaseWriter',
+    'InsertOrUpdate',
     'INSERT',
     'SELECT',
     'UPDATE',

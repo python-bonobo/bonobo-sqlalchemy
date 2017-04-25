@@ -1,10 +1,10 @@
-# bonobo-selenium (see github.com/python-bonobo/bonobo-selenium)
+# bonobo-sqlalchemy (see github.com/python-bonobo/bonobo-sqlalchemy)
 
 name = 'bonobo_sqlalchemy'
 description = 'Bonobo SQLAlchemy Extension'
 license = 'Apache License, Version 2.0'
 
-url = 'https://bonobo-project.org/'
+url = 'https://www.bonobo-project.org/extension/sqlalchemy'
 download_url = 'https://github.com/python-bonobo/bonobo-sqlalchemy/tarball/{version}'
 
 author = 'Romain Dorgueil'
@@ -21,23 +21,13 @@ enable_features = {
 
 install_requires = [
     'bonobo',
+    'toolz',
     'SQLAlchemy >=1.1,<1.2',
 ]
 
 extras_require = {
     'dev': [
-        'coverage >=4.2,<4.3',
-        'mock >=2.0,<2.1',
-        'nose >=1.3,<1.4',
-        'pylint >=1.6,<1.7',
-        'pytest >=3,<4',
-        'pytest-cov >=2.4,<2.5',
-        'sphinx',
-        'sphinx_rtd_theme',
-        'yapf',
+        'bonobo[dev]',
     ],
 }
 
-@listen('edgy.project.feature.make.on_generate', priority=10)
-def on_make_generate_docker_targets(event):
-    event.makefile['SPHINX_SOURCEDIR'] = 'docs'
