@@ -3,6 +3,7 @@ import traceback
 from queue import Queue
 
 from sqlalchemy import MetaData, Table
+from sqlalchemy.sql import select
 
 from bonobo import Bag, ErrorBag
 from bonobo.config import Configurable, ContextProcessor, Option, Service
@@ -57,13 +58,12 @@ class InsertOrUpdate(Configurable):
         """
         buffer = Queue()
         yield buffer
-
         for row in self.commit(table, connection, buffer, force=True):
             context.push(Bag(row))
 
-    def initialize(self, context):
-        ### XXX maybe outdated ??? Where does this go ?
-        context.stats.update(dict(SELECT=0, INSERT=0, UPDATE=0))
+    #def initialize(self, context):
+    #    ### XXX maybe outdated ??? Where does this go ?
+    #    context.stats.update(dict(SELECT=0, INSERT=0, UPDATE=0))
 
     def __call__(self, engine, connection, table, buffer, row, *args):
         """
@@ -78,7 +78,7 @@ class InsertOrUpdate(Configurable):
         yield from self.commit(table, connection, buffer)
 
     def commit(self, table, connection, buffer, force=False):
-        if force or buffer.qsize() >= self.buffer_size:
+        if force or (buffer.qsize() >= self.buffer_size):
             with connection.begin():
                 while buffer.qsize() > 0:
                     try:
@@ -91,9 +91,7 @@ class InsertOrUpdate(Configurable):
         """
 
         # find line, if it exist
-        print('before', row)
-        dbrow = self.find(connection, row)
-        print('after', row)
+        dbrow = self.find(connection, table, row)
 
         # TODO XXX use actual database function instead of this stupid thing
         now = datetime.datetime.now()
@@ -109,17 +107,11 @@ class InsertOrUpdate(Configurable):
             if not UPDATE in self.allowed_operations:
                 raise ProhibitedOperationError('UPDATE operations are not allowed by this transformation.')
 
-            _columns = self.get_columns_for(column_names, row, dbrow)
-
-            query = 'UPDATE {table} SET {values} WHERE {criteria}'.format(
-                table=self.table_name,
-                values=', '.join(
-                    ('{column} = ?'.format(column=_column) for _column in _columns if not _column in self.discriminant)
-                ),
-                criteria=' AND '.join(('{key} = ?'.format(key=_key) for _key in self.discriminant))
-            )
-            values = [row[_column] for _column in _columns if not _column in self.discriminant] + \
-                     [row[_column] for _column in self.discriminant]
+            query = table.update().values(**{
+                col: row.get(col) for col in self.get_columns_for(column_names, row, dbrow)
+            }).where(*(
+                getattr(table.c, col) == row.get(col) for col in self.discriminant
+            ))
 
         # INSERT
         else:
@@ -127,19 +119,21 @@ class InsertOrUpdate(Configurable):
                 raise ProhibitedOperationError('INSERT operations are not allowed by this transformation.')
 
             if self.created_at_field in column_names:
-                row[self.created_at_field] = now
+                row[self.created_at_field] = now  # XXX UNPURE
             else:
                 if self.created_at_field in row:
-                    del row[self.created_at_field]
+                    del row[self.created_at_field]  # UNPURE
 
-            _columns = self.get_columns_for(column_names, row)
-            query = 'INSERT INTO {table} ({keys}) VALUES ({values})'.format(
-                table=self.table_name, keys=', '.join(_columns), values=', '.join(['?'] * len(_columns))
-            )
-            values = [row[key] for key in _columns]
+            query = table.insert().values(**{
+                col: row.get(col) for col in self.get_columns_for(column_names, row)
+            })
 
         # Execute
-        connection.execute(query, values)
+        try:
+            connection.execute(query)
+        except Exception:
+            connection.rollback()
+            raise
 
         # Increment stats TODO
         # if dbrow:
@@ -159,19 +153,13 @@ class InsertOrUpdate(Configurable):
 
         return row
 
-    def find(self, connection, dataset):
-        query = 'SELECT * FROM {self.table_name} WHERE {criteria} LIMIT 1'.format(
-            self=self,
-            criteria=' AND '.join([key_atom + ' = ?' for key_atom in self.discriminant]),
-        )
-        rp = connection.execute(
-            query, [dataset.get(key_atom) for key_atom in self.discriminant]
-        )
+    def find(self, connection, table, row):
+        sql = select([table]).where(
+            *(getattr(table.c, col) == row.get(col) for col in self.discriminant)
+        ).limit(1)
+        row = connection.execute(sql).fetchone()
+        return dict(row) if row else None
 
-        # Increment stats TODO
-        # self._input._special_stats[SELECT] += 1
-
-        return rp.fetchone()
 
     def get_columns_for(self, column_names, row, dbrow=None):
         """Retrieve list of table column names for which we have a value in given hash.
@@ -179,13 +167,13 @@ class InsertOrUpdate(Configurable):
         """
         if dbrow:
             candidates = filter(
-                lambda column: not column in self.insert_only_fields,
+                lambda col: col not in self.insert_only_fields,
                 column_names
             )
         else:
             candidates = column_names
 
-        return [key for key in row if key in candidates]
+        return set(candidates).intersection(row.keys())
 
     def add_fetch_columns(self, *columns, **aliased_columns):
         self.fetch_columns = {
