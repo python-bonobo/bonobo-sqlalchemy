@@ -61,10 +61,6 @@ class InsertOrUpdate(Configurable):
         for row in self.commit(table, connection, buffer, force=True):
             context.push(Bag(row))
 
-    #def initialize(self, context):
-    #    ### XXX maybe outdated ??? Where does this go ?
-    #    context.stats.update(dict(SELECT=0, INSERT=0, UPDATE=0))
-
     def __call__(self, engine, connection, table, buffer, row, *args):
         """
         Main transformatio method, pushing a row to the "yet to be processed elements" queue and commiting if necessary.
