@@ -1,13 +1,12 @@
-from functools import partial
-
 import logging
-import os
-from sqlalchemy import Column, MetaData, String, Table, create_engine, Text
-from sqlalchemy.exc import OperationalError
 
 import bonobo
+import os
 from bonobo.examples.datasets import fablabs as fablabs_example
 from bonobo.ext.opendatasoft import OpenDataSoftAPI
+from sqlalchemy import Column, MetaData, String, Table, Text, create_engine
+from sqlalchemy.exc import OperationalError
+
 from bonobo_sqlalchemy import InsertOrUpdate
 
 API_DATASET = 'fablabs-in-the-world'
@@ -32,12 +31,12 @@ except OperationalError:
     root_engine = create_engine(DSN.format('postgres'))
     conn = root_engine.connect()
     conn.execute("commit")
-    conn.execute("create database "+dbname)
+    conn.execute("create database " + dbname)
     conn.close()
     metadata.create_all(engine)
 
 logging.basicConfig()
-#logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
+# logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 
 graph = bonobo.Graph(
     OpenDataSoftAPI(dataset=API_DATASET, netloc=API_NETLOC, timezone='Europe/Paris'),

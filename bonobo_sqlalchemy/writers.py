@@ -5,9 +5,9 @@ from queue import Queue
 from sqlalchemy import MetaData, Table
 from sqlalchemy.sql import select
 
-from bonobo import Bag, ErrorBag
-from bonobo.config import Configurable, ContextProcessor, Option, Service
-from bonobo.config.processors import contextual
+from bonobo import Bag
+from bonobo.config import Configurable, Option, Service, ContextProcessor
+from bonobo.structs.bags import ErrorBag
 from bonobo_sqlalchemy.constants import INSERT, UPDATE
 
 
@@ -15,7 +15,6 @@ class ProhibitedOperationError(Exception):
     pass
 
 
-@contextual
 class InsertOrUpdate(Configurable):
     """
     xxx todo fields vs columns, choose a name
@@ -179,3 +178,4 @@ class InsertOrUpdate(Configurable):
 
         for column in columns:
             self.fetch_columns[column] = column
+
