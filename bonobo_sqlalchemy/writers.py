@@ -26,10 +26,7 @@ class DatabaseWriter:
     discriminant = ('id', )
     created_at_field = 'created_at'
     updated_at_field = 'updated_at'
-    allowed_operations = (
-        INSERT,
-        UPDATE,
-    )
+    allowed_operations = (INSERT, UPDATE, )
 
     def __init__(
         self,
@@ -254,9 +251,8 @@ class _DatabaseWriterExecutionContext(ComponentExecutionContext):
             table=self.component.table_name,
             criteria=' AND '.join([key_atom + ' = ?' for key_atom in self.component.discriminant]),
         )
-        rp = (connection or self.connection).execute(
-            query, [dataset.get(key_atom) for key_atom in self.component.discriminant]
-        )
+        rp = (connection or
+              self.connection).execute(query, [dataset.get(key_atom) for key_atom in self.component.discriminant])
 
         # Increment stats TODO
         # self._input._special_stats[SELECT] += 1
