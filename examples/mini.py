@@ -52,5 +52,5 @@ graph = bonobo.Graph(
 if __name__ == '__main__':
     bonobo.run(graph, services={
         'sqlalchemy.engine': engine
-    }, strategy=ThreadCollectionStrategy)
+    })
 

@@ -20,14 +20,14 @@ enable_features = {
 }
 
 install_requires = [
-    'bonobo >=0.2.2,<0.3',
+    'bonobo >=0.3,<0.4',
     'toolz',
     'SQLAlchemy >=1.1,<1.2',
 ]
 
 extras_require = {
     'dev': [
-        'bonobo[dev]',
+      'bonobo[dev] >=0.3,<0.4',
     ],
 }
 

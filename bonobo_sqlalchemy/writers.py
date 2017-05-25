@@ -2,7 +2,7 @@ import datetime
 import traceback
 from queue import Queue
 
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, and_
 from sqlalchemy.sql import select
 
 from bonobo import Bag
@@ -17,16 +17,16 @@ class ProhibitedOperationError(Exception):
 
 class InsertOrUpdate(Configurable):
     """
-    xxx todo fields vs columns, choose a name
+    TODO: fields vs columns, choose a name (XXX)
     """
-    table_name: str = Option(str, required=True)
-    fetch_columns: tuple = Option(tuple, default=())
-    insert_only_fields: tuple = Option(tuple, default=())
-    discriminant: tuple = Option(tuple, default=('id',))
-    created_at_field: str = Option(str, default='created_at')
-    updated_at_field: str = Option(str, default='updated_at')
-    allowed_operations: tuple = Option(tuple, default=(INSERT, UPDATE,))
-    buffer_size: int = Option(int, default=1000)
+    table_name = Option(str, positional=True, required=True)  # type: str
+    fetch_columns = Option(tuple, default=())  # type: tuple
+    insert_only_fields = Option(tuple, default=())  # type: tuple
+    discriminant = Option(tuple, default=('id',))  # type: tuple
+    created_at_field = Option(str, default='created_at')  # type: str
+    updated_at_field = Option(str, default='updated_at')  # type: str
+    allowed_operations = Option(tuple, default=(INSERT, UPDATE,))  # type: tuple
+    buffer_size = Option(int, default=1000)  # type: int
 
     engine = Service('sqlalchemy.engine')  # type: str
 
@@ -55,12 +55,11 @@ class InsertOrUpdate(Configurable):
         :param engine: 
         :param connection: 
         """
-        buffer = Queue()
-        yield buffer
+        buffer = yield Queue()
         for row in self.commit(table, connection, buffer, force=True):
-            context.push(Bag(row))
+            context.send(Bag(row))
 
-    def __call__(self, engine, connection, table, buffer, row, *args):
+    def __call__(self, engine, connection, table, buffer, *args, **kwargs):
         """
         Main transformatio method, pushing a row to the "yet to be processed elements" queue and commiting if necessary.
         
@@ -69,7 +68,14 @@ class InsertOrUpdate(Configurable):
         :param buffer: 
         :param row: 
         """
-        buffer.put(row)
+
+        if len(args) == 1 and not len(kwargs):
+            buffer.put(args[0])
+        elif len(kwargs) and not len(args):
+            buffer.put(kwargs)
+        else:
+            raise RuntimeError('Invalid input.')
+
         yield from self.commit(table, connection, buffer)
 
     def commit(self, table, connection, buffer, force=False):
@@ -104,9 +110,9 @@ class InsertOrUpdate(Configurable):
 
             query = table.update().values(**{
                 col: row.get(col) for col in self.get_columns_for(column_names, row, dbrow)
-            }).where(*(
+            }).where(and_(*(
                 getattr(table.c, col) == row.get(col) for col in self.discriminant
-            ))
+            )))
 
         # INSERT
         else:
@@ -149,12 +155,11 @@ class InsertOrUpdate(Configurable):
         return row
 
     def find(self, connection, table, row):
-        sql = select([table]).where(
+        sql = select([table]).where(and_(
             *(getattr(table.c, col) == row.get(col) for col in self.discriminant)
-        ).limit(1)
+        )).limit(1)
         row = connection.execute(sql).fetchone()
         return dict(row) if row else None
-
 
     def get_columns_for(self, column_names, row, dbrow=None):
         """Retrieve list of table column names for which we have a value in given hash.
@@ -178,4 +183,3 @@ class InsertOrUpdate(Configurable):
 
         for column in columns:
             self.fetch_columns[column] = column
-

@@ -3,7 +3,8 @@ import logging
 from slugify import slugify
 from sqlalchemy import create_engine
 
-from bonobo_sqlalchemy.write import DatabaseLoad
+from bonobo.ext.opendatasoft import OpenDataSoftAPI
+from bonobo_sqlalchemy import InsertOrUpdate
 
 logging.basicConfig()
 logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
@@ -11,12 +12,9 @@ logging.getLogger('sqlalchemy.engine').setLevel(logging.INFO)
 engine = create_engine('sqlite:///basics.sqlite')
 
 import json
+import bonobo
 
 from blessings import Terminal
-
-from bonobo import console_run, JsonWriter
-from bonobo.basics import Tee
-from bonobo.ext.opendatasoft import from_opendatasoft_api
 
 try:
     import pycountry
@@ -70,15 +68,15 @@ def prepare_for_database(row):
 
 
 if __name__ == '__main__':
-    console_run(
-        from_opendatasoft_api(
-            API_DATASET, netloc=API_NETLOC, timezone='Europe/Paris'
-        ),
+    bonobo.run(
+        OpenDataSoftAPI(API_DATASET, netloc=API_NETLOC, timezone='Europe/Paris'),
         normalize,
         filter_france,
-        Tee(prepare_for_database),
-        DatabaseWriter('fablabs.json'),
-        output=True,
+        prepare_for_database,
+        InsertOrUpdate('fablabs'),
+        services={
+            'sqlalchemy.engine':
+
+        }
     )
 
-#load = DatabaseLoad(engine=engine, table_name='coffeeshops', )
