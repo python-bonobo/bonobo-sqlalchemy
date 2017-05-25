@@ -1,1 +1,14 @@
 -e .
+
+appdirs==1.4.3
+bonobo==0.3.0
+colorama==0.3.9
+enum34==1.1.6
+fs==2.0.3
+pbr==3.0.1
+psutil==5.2.2
+pytz==2017.2
+requests==2.14.2
+six==1.10.0
+sqlalchemy==1.1.10
+stevedore==1.21.0
