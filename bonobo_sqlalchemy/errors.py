@@ -1,0 +1,2 @@
+class ProhibitedOperationError(Exception):
+    pass

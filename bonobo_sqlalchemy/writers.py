@@ -6,13 +6,10 @@ from sqlalchemy import MetaData, Table, and_
 from sqlalchemy.sql import select
 
 from bonobo import Bag
-from bonobo.config import Configurable, Option, Service, ContextProcessor
+from bonobo.config import Configurable, ContextProcessor, Option, Service
 from bonobo.structs.bags import ErrorBag
 from bonobo_sqlalchemy.constants import INSERT, UPDATE
-
-
-class ProhibitedOperationError(Exception):
-    pass
+from errors import ProhibitedOperationError
 
 
 class InsertOrUpdate(Configurable):
