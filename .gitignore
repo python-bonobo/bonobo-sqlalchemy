@@ -10,3 +10,4 @@
 /dist
 /htmlcov
 /pylint.html
+/docs/_build

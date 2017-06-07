@@ -1,51 +1,44 @@
 # This file has been auto-generated.
 # All changes will be lost, see Projectfile.
 #
-# Updated at 2016-12-29 19:04:33.277636
+# Updated at 2017-06-07 23:39:44.973575
 
+PACKAGE ?= bonobo_sqlalchemy
 PYTHON ?= $(shell which python)
 PYTHON_BASENAME ?= $(shell basename $(PYTHON))
+PYTHON_DIRNAME ?= $(shell dirname $(PYTHON))
 PYTHON_REQUIREMENTS_FILE ?= requirements.txt
 PYTHON_REQUIREMENTS_DEV_FILE ?= requirements-dev.txt
 QUICK ?= 
-VIRTUAL_ENV ?= .virtualenv-$(PYTHON_BASENAME)
-PIP ?= $(VIRTUAL_ENV)/bin/pip
-PYTEST ?= $(VIRTUAL_ENV)/bin/pytest
-PYTEST_OPTIONS ?= --capture=no --cov=bonobo_sqlalchemy --cov-report html
-YAPF ?= $(VIRTUAL_ENV)/bin/yapf
+PIP ?= $(PYTHON_DIRNAME)/pip
+PIP_INSTALL_OPTIONS ?= 
+PYTEST ?= $(PYTHON_DIRNAME)/pytest
+PYTEST_OPTIONS ?= --capture=no --cov=$(PACKAGE) --cov-report html
+YAPF ?= $(PYTHON_DIRNAME)/yapf
 YAPF_OPTIONS ?= -rip
-SPHINX_SOURCEDIR ?= docs
+VERSION ?= $(shell git describe 2>/dev/null || echo dev)
 
-.PHONY: clean format install install-dev lint test
+.PHONY: clean format install install-dev test
 
 # Installs the local project dependencies.
-install: $(VIRTUAL_ENV)
+install:
 	if [ -z "$(QUICK)" ]; then \
-	    $(PIP) install -U pip wheel -r $(PYTHON_REQUIREMENTS_FILE) ; \
+	    $(PIP) install -U pip wheel $(PYTHON_PIP_INSTALL_OPTIONS) -r $(PYTHON_REQUIREMENTS_FILE) ; \
 	fi
 
 # Installs the local project dependencies, including development-only libraries.
-install-dev: $(VIRTUAL_ENV)
+install-dev:
 	if [ -z "$(QUICK)" ]; then \
-	    $(PIP) install -U pip wheel -r $(PYTHON_REQUIREMENTS_DEV_FILE) ; \
+	    $(PIP) install -U pip wheel $(PYTHON_PIP_INSTALL_OPTIONS) -r $(PYTHON_REQUIREMENTS_DEV_FILE) ; \
 	fi
 
 # Cleans up the local mess.
 clean:
-	rm -rf build
-	rm -rf dist
-
-# Setup the local virtualenv, or use the one provided by the current environment.
-$(VIRTUAL_ENV):
-	virtualenv -p $(PYTHON) $(VIRTUAL_ENV)
-	$(PIP) install -U pip wheel
-	ln -fs $(VIRTUAL_ENV)/bin/activate activate-$(PYTHON_BASENAME)
-
-lint: install-dev
-	$(VIRTUAL_ENV)/bin/pylint --py3k bonobo_sqlalchemy -f html > pylint.html
+	rm -rf build dist *.egg-info
 
 test: install-dev
 	$(PYTEST) $(PYTEST_OPTIONS) tests
 
 format: install-dev
 	$(YAPF) $(YAPF_OPTIONS) .
+	$(YAPF) $(YAPF_OPTIONS) Projectfile
