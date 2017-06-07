@@ -1,7 +1,7 @@
 # This file has been auto-generated.
 # All changes will be lost, see Projectfile.
 #
-# Updated at 2017-06-07 23:30:48.999650
+# Updated at 2017-06-07 23:39:44.973575
 
 PACKAGE ?= bonobo_sqlalchemy
 PYTHON ?= $(shell which python)
@@ -14,15 +14,11 @@ PIP ?= $(PYTHON_DIRNAME)/pip
 PIP_INSTALL_OPTIONS ?= 
 PYTEST ?= $(PYTHON_DIRNAME)/pytest
 PYTEST_OPTIONS ?= --capture=no --cov=$(PACKAGE) --cov-report html
-SPHINX_BUILD ?= $(PYTHON_DIRNAME)/sphinx-build
-SPHINX_OPTIONS ?= 
-SPHINX_SOURCEDIR ?= docs
-SPHINX_BUILDDIR ?= $(SPHINX_SOURCEDIR)/_build
 YAPF ?= $(PYTHON_DIRNAME)/yapf
 YAPF_OPTIONS ?= -rip
 VERSION ?= $(shell git describe 2>/dev/null || echo dev)
 
-.PHONY: $(SPHINX_SOURCEDIR) clean format install install-dev test
+.PHONY: clean format install install-dev test
 
 # Installs the local project dependencies.
 install:
@@ -42,9 +38,6 @@ clean:
 
 test: install-dev
 	$(PYTEST) $(PYTEST_OPTIONS) tests
-
-$(SPHINX_SOURCEDIR): install-dev
-	$(SPHINX_BUILD) -b html -D latex_paper_size=a4 $(SPHINX_OPTIONS) $(SPHINX_SOURCEDIR) $(SPHINX_BUILDDIR)/html
 
 format: install-dev
 	$(YAPF) $(YAPF_OPTIONS) .

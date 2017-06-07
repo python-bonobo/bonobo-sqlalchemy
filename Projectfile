@@ -4,7 +4,6 @@ from edgy.project import require
 
 pytest = require('pytest')
 python = require('python')
-sphinx = require('sphinx')
 yapf = require('yapf')
 
 python.setup(
@@ -19,7 +18,6 @@ python.setup(
 
 python.add_requirements(
     'bonobo >=0.3,<0.4',
-    'toolz',
     'SQLAlchemy >=1.1,<1.2',
     dev=[
         'bonobo[dev] >=0.3,<0.4',
