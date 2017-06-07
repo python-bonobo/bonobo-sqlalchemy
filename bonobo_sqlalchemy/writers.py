@@ -5,11 +5,11 @@ from queue import Queue
 from sqlalchemy import MetaData, Table, and_
 from sqlalchemy.sql import select
 
-from bonobo import Bag
-from bonobo.config import Configurable, ContextProcessor, Option, Service
+from bonobo.config import Configurable, Option, Service, ContextProcessor
+from bonobo.structs.bags import Bag
 from bonobo.structs.bags import ErrorBag
 from bonobo_sqlalchemy.constants import INSERT, UPDATE
-from errors import ProhibitedOperationError
+from bonobo_sqlalchemy.errors import ProhibitedOperationError
 
 
 class InsertOrUpdate(Configurable):

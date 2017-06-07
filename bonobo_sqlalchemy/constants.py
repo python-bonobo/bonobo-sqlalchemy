@@ -1,9 +1,5 @@
-__all__ = [
-    'INSERT',
-    'SELECT',
-    'UPDATE',
-]
+from bonobo.structs.tokens import Token
 
-SELECT = 'SELECT'
-INSERT = 'INSERT'
-UPDATE = 'UPDATE'
+SELECT = Token('Select')
+INSERT = Token('Insert')
+UPDATE = Token('Update')
