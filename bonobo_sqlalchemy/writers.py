@@ -19,10 +19,10 @@ class InsertOrUpdate(Configurable):
     table_name = Option(str, positional=True, required=True)  # type: str
     fetch_columns = Option(tuple, default=())  # type: tuple
     insert_only_fields = Option(tuple, default=())  # type: tuple
-    discriminant = Option(tuple, default=('id',))  # type: tuple
+    discriminant = Option(tuple, default=('id', ))  # type: tuple
     created_at_field = Option(str, default='created_at')  # type: str
     updated_at_field = Option(str, default='updated_at')  # type: str
-    allowed_operations = Option(tuple, default=(INSERT, UPDATE,))  # type: tuple
+    allowed_operations = Option(tuple, default=(INSERT, UPDATE, ))  # type: tuple
     buffer_size = Option(int, default=1000)  # type: int
 
     engine = Service('sqlalchemy.engine')  # type: str
@@ -105,11 +105,10 @@ class InsertOrUpdate(Configurable):
             if not UPDATE in self.allowed_operations:
                 raise ProhibitedOperationError('UPDATE operations are not allowed by this transformation.')
 
-            query = table.update().values(**{
-                col: row.get(col) for col in self.get_columns_for(column_names, row, dbrow)
-            }).where(and_(*(
-                getattr(table.c, col) == row.get(col) for col in self.discriminant
-            )))
+            query = table.update().values(
+                **{col: row.get(col)
+                   for col in self.get_columns_for(column_names, row, dbrow)}
+            ).where(and_(*(getattr(table.c, col) == row.get(col) for col in self.discriminant)))
 
         # INSERT
         else:
@@ -122,9 +121,7 @@ class InsertOrUpdate(Configurable):
                 if self.created_at_field in row:
                     del row[self.created_at_field]  # UNPURE
 
-            query = table.insert().values(**{
-                col: row.get(col) for col in self.get_columns_for(column_names, row)
-            })
+            query = table.insert().values(**{col: row.get(col) for col in self.get_columns_for(column_names, row)})
 
         # Execute
         try:
@@ -152,9 +149,8 @@ class InsertOrUpdate(Configurable):
         return row
 
     def find(self, connection, table, row):
-        sql = select([table]).where(and_(
-            *(getattr(table.c, col) == row.get(col) for col in self.discriminant)
-        )).limit(1)
+        sql = select([table]
+                     ).where(and_(*(getattr(table.c, col) == row.get(col) for col in self.discriminant))).limit(1)
         row = connection.execute(sql).fetchone()
         return dict(row) if row else None
 
@@ -163,10 +159,7 @@ class InsertOrUpdate(Configurable):
 
         """
         if dbrow:
-            candidates = filter(
-                lambda col: col not in self.insert_only_fields,
-                column_names
-            )
+            candidates = filter(lambda col: col not in self.insert_only_fields, column_names)
         else:
             candidates = column_names
 

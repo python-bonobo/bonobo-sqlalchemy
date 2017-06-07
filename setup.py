@@ -41,17 +41,23 @@ else:
     version = version_ns.get('__version__', 'dev')
 
 setup(
-    name='bonobo_sqlalchemy',
+    author='Romain Dorgueil',
+    author_email='romain@dorgueil.net',
     description='Bonobo SQLAlchemy Extension',
     license='Apache License, Version 2.0',
-    install_requires=['bonobo >=0.3,<0.4', 'toolz', 'SQLAlchemy >=1.1,<1.2'],
+    name='bonobo_sqlalchemy',
     version=version,
     long_description=long_description,
     classifiers=classifiers,
     packages=find_packages(exclude=['ez_setup', 'example', 'test']),
     include_package_data=True,
-    extras_require={'dev': ['bonobo[dev] >=0.3,<0.4']},
-    url='https://www.bonobo-project.org/extension/sqlalchemy',
-    download_url=
-    'https://github.com/python-bonobo/bonobo-sqlalchemy/tarball/{version}'.
-    format(version=version), )
+    install_requires=['SQLAlchemy (>= 1.1, < 1.2)', 'bonobo (>= 0.3, < 0.4)', 'toolz'],
+    extras_require={
+        'dev': [
+            'bonobo (>= 0.3, < 0.4)', 'coverage (>= 4.4, < 5.0)', 'pytest (>= 3.1, < 4.0)',
+            'pytest-cov (>= 2.5, < 3.0)', 'sphinx (>= 1.6, < 2.0)'
+        ]
+    },
+    url='https://www.bonobo-project.org/with/sqlalchemy',
+    download_url='https://github.com/python-bonobo/bonobo-sqlalchemy/tarball/{version}'.format(version=version),
+)

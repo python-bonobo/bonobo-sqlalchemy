@@ -8,6 +8,7 @@ POSTGRES_DEFAULTS = {
     'database': environ.get('POSTGRES_DATABASE', None) or 'postgres',
 }
 
+
 def postgresql_dsn(**kwargs):
     params = dict(POSTGRES_DEFAULTS)
     for k, v in kwargs.items():

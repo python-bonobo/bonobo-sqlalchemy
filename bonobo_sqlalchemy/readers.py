@@ -22,7 +22,8 @@ class Select(Configurable):
                     query=query,
                     limit=self.pack_size,
                     offset=' OFFSET {}'.format(offset * self.pack_size) if offset else ''
-                ), use_labels=True
+                ),
+                use_labels=True
             ).fetchall()
 
             if not len(results):

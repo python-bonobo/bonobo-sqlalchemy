@@ -1,33 +1,29 @@
 # bonobo-sqlalchemy (see github.com/python-bonobo/bonobo-sqlalchemy)
+#
+from edgy.project import require
 
-name = 'bonobo_sqlalchemy'
-description = 'Bonobo SQLAlchemy Extension'
-license = 'Apache License, Version 2.0'
+pytest = require('pytest')
+python = require('python')
+sphinx = require('sphinx')
+yapf = require('yapf')
 
-url = 'https://www.bonobo-project.org/extension/sqlalchemy'
-download_url = 'https://github.com/python-bonobo/bonobo-sqlalchemy/tarball/{version}'
+python.setup(
+    name='bonobo_sqlalchemy',
+    description='Bonobo SQLAlchemy Extension',
+    license='Apache License, Version 2.0',
+    url='https://www.bonobo-project.org/with/sqlalchemy',
+    download_url='https://github.com/python-bonobo/bonobo-sqlalchemy/tarball/{version}',
+    author='Romain Dorgueil',
+    author_email='romain@dorgueil.net',
+)
 
-author = 'Romain Dorgueil'
-author_email = 'romain@dorgueil.net'
-
-enable_features = {
-    'make',
-    'pytest',
-    'git',
-    'pylint',
-    'python',
-    'yapf',
-}
-
-install_requires = [
+python.add_requirements(
     'bonobo >=0.3,<0.4',
     'toolz',
     'SQLAlchemy >=1.1,<1.2',
-]
-
-extras_require = {
-    'dev': [
-      'bonobo[dev] >=0.3,<0.4',
+    dev=[
+        'bonobo[dev] >=0.3,<0.4',
     ],
-}
+)
 
+# vim: ft=python:
