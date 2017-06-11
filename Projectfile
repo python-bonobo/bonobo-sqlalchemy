@@ -1,5 +1,5 @@
 # bonobo-sqlalchemy (see github.com/python-bonobo/bonobo-sqlalchemy)
-#
+
 from edgy.project import require
 
 pytest = require('pytest')
@@ -17,7 +17,6 @@ python.setup(
 )
 
 bonobo_version = '>=0.4,<0.5'
-
 python.add_requirements(
     'bonobo '+bonobo_version,
     'SQLAlchemy >=1.1,<1.2',
