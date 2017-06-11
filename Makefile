@@ -1,7 +1,7 @@
 # This file has been auto-generated.
 # All changes will be lost, see Projectfile.
 #
-# Updated at 2017-06-11 10:55:53.311489
+# Updated at 2017-06-11 11:00:40.190640
 
 PACKAGE ?= bonobo_sqlalchemy
 PYTHON ?= $(shell which python)
@@ -14,7 +14,7 @@ PIP ?= $(PYTHON_DIRNAME)/pip
 PIP_INSTALL_OPTIONS ?= 
 PYTEST ?= $(PYTHON_DIRNAME)/pytest
 PYTEST_OPTIONS ?= --capture=no --cov=$(PACKAGE) --cov-report html
-YAPF ?= $(PYTHON_DIRNAME)/yapf
+YAPF ?= $(PYTHON) -m yapf
 YAPF_OPTIONS ?= -rip
 VERSION ?= $(shell git describe 2>/dev/null || echo dev)
 

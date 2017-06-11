@@ -18,10 +18,10 @@ python.setup(
 
 bonobo_version = '>=0.4,<0.5'
 python.add_requirements(
-    'bonobo '+bonobo_version,
+    'bonobo ' + bonobo_version,
     'SQLAlchemy >=1.1,<1.2',
     dev=[
-        'bonobo[dev] '+bonobo_version,
+        'bonobo[dev] ' + bonobo_version,
     ],
 )
 
