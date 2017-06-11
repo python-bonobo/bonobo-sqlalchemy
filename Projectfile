@@ -16,11 +16,13 @@ python.setup(
     author_email='romain@dorgueil.net',
 )
 
+bonobo_version = '>=0.4,<0.5'
+
 python.add_requirements(
-    'bonobo >=0.4,<0.5',
+    'bonobo '+bonobo_version,
     'SQLAlchemy >=1.1,<1.2',
     dev=[
-        'bonobo[dev] >=0.3,<0.4',
+        'bonobo[dev] '+bonobo_version,
     ],
 )
 
