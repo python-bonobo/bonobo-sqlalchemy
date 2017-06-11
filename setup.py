@@ -51,7 +51,7 @@ setup(
     classifiers=classifiers,
     packages=find_packages(exclude=['ez_setup', 'example', 'test']),
     include_package_data=True,
-    install_requires=['SQLAlchemy (>= 1.1, < 1.2)', 'bonobo (>= 0.3, < 0.4)'],
+    install_requires=['SQLAlchemy (>= 1.1, < 1.2)', 'bonobo (>= 0.4, < 0.5)'],
     extras_require={
         'dev':
         ['bonobo (>= 0.3, < 0.4)', 'coverage (>= 4.4, < 5.0)', 'pytest (>= 3.1, < 4.0)', 'pytest-cov (>= 2.5, < 3.0)']
