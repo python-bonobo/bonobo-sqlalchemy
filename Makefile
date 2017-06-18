@@ -1,7 +1,7 @@
 # This file has been auto-generated.
 # All changes will be lost, see Projectfile.
 #
-# Updated at 2017-06-11 11:00:40.190640
+# Updated at 2017-06-18 21:43:53.890376
 
 PACKAGE ?= bonobo_sqlalchemy
 PYTHON ?= $(shell which python)
