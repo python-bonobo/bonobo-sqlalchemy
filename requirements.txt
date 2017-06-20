@@ -13,6 +13,6 @@ pyparsing==2.2.0
 pytz==2017.2
 requests==2.18.1
 six==1.10.0
-sqlalchemy==1.1.10
+sqlalchemy==1.1.11
 stevedore==1.23.0
 urllib3==1.21.1
