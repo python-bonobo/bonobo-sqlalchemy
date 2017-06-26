@@ -8,7 +8,7 @@ coverage==4.4.1
 fs==2.0.4
 idna==2.5
 packaging==16.8
-pbr==3.0.1
+pbr==3.1.1
 psutil==5.2.2
 py==1.4.34
 pyparsing==2.2.0
