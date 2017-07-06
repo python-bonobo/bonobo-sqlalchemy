@@ -3,11 +3,12 @@ import traceback
 from queue import Queue
 
 from sqlalchemy import MetaData, Table, and_
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.sql import select
 
-from bonobo.config import Configurable, Option, Service, ContextProcessor
-from bonobo.structs.bags import Bag
-from bonobo.structs.bags import ErrorBag
+from bonobo.config import Configurable, ContextProcessor, Option, Service
+from bonobo.errors import UnrecoverableError
+from bonobo.structs.bags import Bag, ErrorBag
 from bonobo_sqlalchemy.constants import INSERT, UPDATE
 from bonobo_sqlalchemy.errors import ProhibitedOperationError
 
@@ -16,13 +17,13 @@ class InsertOrUpdate(Configurable):
     """
     TODO: fields vs columns, choose a name (XXX)
     """
-    table_name = Option(str, positional=True, required=True)  # type: str
+    table_name = Option(str, positional=True)  # type: str
     fetch_columns = Option(tuple, default=())  # type: tuple
     insert_only_fields = Option(tuple, default=())  # type: tuple
-    discriminant = Option(tuple, default=('id', ))  # type: tuple
+    discriminant = Option(tuple, default=('id',))  # type: tuple
     created_at_field = Option(str, default='created_at')  # type: str
     updated_at_field = Option(str, default='updated_at')  # type: str
-    allowed_operations = Option(tuple, default=(INSERT, UPDATE, ))  # type: tuple
+    allowed_operations = Option(tuple, default=(INSERT, UPDATE,))  # type: tuple
     buffer_size = Option(int, default=1000)  # type: int
 
     engine = Service('sqlalchemy.engine')  # type: str
@@ -35,7 +36,13 @@ class InsertOrUpdate(Configurable):
         
         :param engine: 
         """
-        with engine.connect() as connection:
+        try:
+            connection = engine.connect()
+        except OperationalError as exc:
+            raise UnrecoverableError(
+                'Could not create SQLAlchemy connection: {}.'.format(str(exc).replace('\n', ''))) from exc
+
+        with connection:
             yield connection
 
     @ContextProcessor
