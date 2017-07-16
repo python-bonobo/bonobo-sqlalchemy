@@ -20,10 +20,10 @@ class InsertOrUpdate(Configurable):
     table_name = Option(str, positional=True)  # type: str
     fetch_columns = Option(tuple, default=())  # type: tuple
     insert_only_fields = Option(tuple, default=())  # type: tuple
-    discriminant = Option(tuple, default=('id',))  # type: tuple
+    discriminant = Option(tuple, default=('id', ))  # type: tuple
     created_at_field = Option(str, default='created_at')  # type: str
     updated_at_field = Option(str, default='updated_at')  # type: str
-    allowed_operations = Option(tuple, default=(INSERT, UPDATE,))  # type: tuple
+    allowed_operations = Option(tuple, default=(INSERT, UPDATE, ))  # type: tuple
     buffer_size = Option(int, default=1000)  # type: int
 
     engine = Service('sqlalchemy.engine')  # type: str
@@ -39,8 +39,8 @@ class InsertOrUpdate(Configurable):
         try:
             connection = engine.connect()
         except OperationalError as exc:
-            raise UnrecoverableError(
-                'Could not create SQLAlchemy connection: {}.'.format(str(exc).replace('\n', ''))) from exc
+            raise UnrecoverableError('Could not create SQLAlchemy connection: {}.'.format(str(exc).replace('\n', ''))
+                                     ) from exc
 
         with connection:
             yield connection
