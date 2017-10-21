@@ -23,7 +23,12 @@ class InsertOrUpdate(Configurable):
     discriminant = Option(tuple, default=('id', ))  # type: tuple
     created_at_field = Option(str, default='created_at')  # type: str
     updated_at_field = Option(str, default='updated_at')  # type: str
-    allowed_operations = Option(tuple, default=(INSERT, UPDATE, ))  # type: tuple
+    allowed_operations = Option(
+        tuple, default=(
+            INSERT,
+            UPDATE,
+        )
+    )  # type: tuple
     buffer_size = Option(int, default=1000)  # type: int
 
     engine = Service('sqlalchemy.engine')  # type: str
@@ -156,8 +161,8 @@ class InsertOrUpdate(Configurable):
         return row
 
     def find(self, connection, table, row):
-        sql = select([table]
-                     ).where(and_(*(getattr(table.c, col) == row.get(col) for col in self.discriminant))).limit(1)
+        sql = select([table]).where(and_(*(getattr(table.c, col) == row.get(col) for col in self.discriminant))
+                                    ).limit(1)
         row = connection.execute(sql).fetchone()
         return dict(row) if row else None
 
