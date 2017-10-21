@@ -1,6 +1,6 @@
 # bonobo-sqlalchemy (see github.com/python-bonobo/bonobo-sqlalchemy)
 
-from edgy.project import require
+from medikit import require
 
 pytest = require('pytest')
 python = require('python')
@@ -16,13 +16,12 @@ python.setup(
     author_email='romain@dorgueil.net',
 )
 
-bonobo_version = '>=0.4,<0.5'
+bonobo_version = '>= 0.5'
+
 python.add_requirements(
     'bonobo ' + bonobo_version,
     'SQLAlchemy >=1.1,<1.2',
-    dev=[
-        'bonobo[dev] ' + bonobo_version,
-    ],
+    dev=['bonobo[dev] ' + bonobo_version],
 )
 
 # vim: ft=python:

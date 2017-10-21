@@ -4,13 +4,13 @@ from bonobo.config.services import Service
 
 
 class Select(Configurable):
-    query = Option(str, positional=True, required=True, default='SELECT 1')  # type: str
-    pack_size = Option(int, default=1000)  # type: int
-    limit = Option(int)  # type: int
+    query = Option(str, positional=True, default='SELECT 1')  # type: str
+    pack_size = Option(int, required=False, default=1000)  # type: int
+    limit = Option(int, required=False)  # type: int
 
     engine = Service('sqlalchemy.engine')  # type: str
 
-    def __call__(self, engine):
+    def call(self, engine):
         query = self.query.strip()
         if query[-1] == ';':
             query = query[0:-1]
