@@ -53,8 +53,10 @@ setup(
     include_package_data=True,
     install_requires=['SQLAlchemy (>= 1.1, < 1.2)', 'bonobo (>= 0.5.1)'],
     extras_require={
-        'dev':
-        ['bonobo (>= 0.5.1)', 'coverage (>= 4.4, < 5.0)', 'pytest (>= 3.1, < 4.0)', 'pytest-cov (>= 2.5, < 3.0)']
+        'dev': [
+            'bonobo (>= 0.5.1)', 'coverage (>= 4.4, < 5.0)', 'pytest (>= 3.1, < 4.0)', 'pytest-cov (>= 2.5, < 3.0)',
+            'yapf'
+        ]
     },
     url='https://www.bonobo-project.org/with/sqlalchemy',
     download_url='https://github.com/python-bonobo/bonobo-sqlalchemy/tarball/{version}'.format(version=version),
