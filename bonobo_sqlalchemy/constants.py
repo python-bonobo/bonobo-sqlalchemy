@@ -1,4 +1,4 @@
-from bonobo.structs.tokens import Token
+from bonobo.constants import Token
 
 SELECT = Token('Select')
 INSERT = Token('Insert')

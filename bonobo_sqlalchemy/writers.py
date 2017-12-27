@@ -6,21 +6,24 @@ from sqlalchemy import MetaData, Table, and_
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.sql import select
 
-from bonobo.config import Configurable, ContextProcessor, Option, Service
+from bonobo.config import Configurable, ContextProcessor, Option, Service, use_context, use_raw_input
 from bonobo.errors import UnrecoverableError
-from bonobo.structs.bags import Bag, ErrorBag
 from bonobo_sqlalchemy.constants import INSERT, UPDATE
 from bonobo_sqlalchemy.errors import ProhibitedOperationError
 
 
+@use_context
+@use_raw_input
 class InsertOrUpdate(Configurable):
     """
     TODO: fields vs columns, choose a name (XXX)
+    Maybe the obvious choice is to keep "field" for row fields, as it's already the name used by bonobo, and call the
+    database columns "columns".
     """
     table_name = Option(str, positional=True)  # type: str
     fetch_columns = Option(tuple, required=False, default=())  # type: tuple
     insert_only_fields = Option(tuple, required=False, default=())  # type: tuple
-    discriminant = Option(tuple, required=False, default=('id', ))  # type: tuple
+    discriminant = Option(tuple, required=False, default=('id',))  # type: tuple
     created_at_field = Option(str, required=False, default='created_at')  # type: str
     updated_at_field = Option(str, required=False, default='updated_at')  # type: str
     allowed_operations = Option(
@@ -34,7 +37,7 @@ class InsertOrUpdate(Configurable):
     engine = Service('sqlalchemy.engine')  # type: str
 
     @ContextProcessor
-    def create_connection(self, context, engine):
+    def create_connection(self, context, *, engine):
         """
         This context processor creates an sqlalchemy connection for use during the lifetime of this transformation's
         execution.
@@ -51,12 +54,12 @@ class InsertOrUpdate(Configurable):
             yield connection
 
     @ContextProcessor
-    def create_table(self, context, engine, connection):
+    def create_table(self, context, connection, *, engine):
         """SQLAlchemy table object, using metadata autoloading from database to avoid the need of column definitions."""
         yield Table(self.table_name, MetaData(), autoload=True, autoload_with=engine)
 
     @ContextProcessor
-    def create_buffer(self, context, engine, connection, table):
+    def create_buffer(self, context, connection, table, *, engine):
         """
         This context processor creates a "buffer" of yet to be persisted elements, and commits the remaining elements
         when the transformation ends.
@@ -66,11 +69,11 @@ class InsertOrUpdate(Configurable):
         """
         buffer = yield Queue()
         for row in self.commit(table, connection, buffer, force=True):
-            context.send(Bag(row))
+            context.send(row)
 
-    def call(self, engine, connection, table, buffer, *args, **kwargs):
+    def __call__(self, connection, table, buffer, context, row, engine):
         """
-        Main transformatio method, pushing a row to the "yet to be processed elements" queue and commiting if necessary.
+        Main transformation method, pushing a row to the "yet to be processed elements" queue and commiting if necessary.
         
         :param engine: 
         :param connection: 
@@ -78,12 +81,7 @@ class InsertOrUpdate(Configurable):
         :param row: 
         """
 
-        if len(args) == 1 and not len(kwargs):
-            buffer.put(args[0])
-        elif len(kwargs) and not len(args):
-            buffer.put(kwargs)
-        else:
-            raise RuntimeError('Invalid input.')
+        buffer.put(row)
 
         yield from self.commit(table, connection, buffer)
 
@@ -94,7 +92,7 @@ class InsertOrUpdate(Configurable):
                     try:
                         yield self.insert_or_update(table, connection, buffer.get())
                     except Exception as exc:
-                        yield ErrorBag(exc, traceback.format_exc())
+                        yield exc
 
     def insert_or_update(self, table, connection, row):
         """ Actual database load transformation logic, without the buffering / transaction logic. 
@@ -161,8 +159,8 @@ class InsertOrUpdate(Configurable):
         return row
 
     def find(self, connection, table, row):
-        sql = select([table]).where(and_(*(getattr(table.c, col) == row.get(col) for col in self.discriminant))
-                                    ).limit(1)
+        sql = select([table]).where(and_(*(getattr(table.c, col) == row.get(col)
+                                           for col in self.discriminant))).limit(1)
         row = connection.execute(sql).fetchone()
         return dict(row) if row else None
 
@@ -175,7 +173,7 @@ class InsertOrUpdate(Configurable):
         else:
             candidates = column_names
 
-        return set(candidates).intersection(row.keys())
+        return set(candidates).intersection(row._fields)
 
     def add_fetch_columns(self, *columns, **aliased_columns):
         self.fetch_columns = {

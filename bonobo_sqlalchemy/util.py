@@ -3,9 +3,7 @@ from os import environ
 
 from sqlalchemy import create_engine
 
-from bonobo_sqlalchemy.logging import get_logger
-
-logger = get_logger()
+from bonobo_sqlalchemy.logging import logger
 
 POSTGRES_DEFAULTS = {
     'driver': 'postgres',
