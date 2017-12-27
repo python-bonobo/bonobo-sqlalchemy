@@ -18,6 +18,4 @@ def create_engine(superuser=False):
 
 
 def get_services():
-    return {
-        'sqlalchemy.engine': create_engine()
-    }
+    return {'sqlalchemy.engine': create_engine()}

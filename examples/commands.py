@@ -41,13 +41,16 @@ def parse_args(parser=None):
 
             if options['create']:
                 # create database/role with super user privileges
-                _execute_sql(root_engine, 'CREATE ROLE {} WITH LOGIN PASSWORD \'{}\';'.format(
-                    settings.DATABASE_USERNAME, settings.DATABASE_PASSWORD
-                ))
-                _execute_sql(root_engine,
-                             'CREATE DATABASE {} WITH OWNER={} TEMPLATE=template0 ENCODING="utf-8";'.format(
-                                 settings.DATABASE_NAME, settings.DATABASE_USERNAME
-                             ))
+                _execute_sql(
+                    root_engine, 'CREATE ROLE {} WITH LOGIN PASSWORD \'{}\';'.format(
+                        settings.DATABASE_USERNAME, settings.DATABASE_PASSWORD
+                    )
+                )
+                _execute_sql(
+                    root_engine, 'CREATE DATABASE {} WITH OWNER={} TEMPLATE=template0 ENCODING="utf-8";'.format(
+                        settings.DATABASE_NAME, settings.DATABASE_USERNAME
+                    )
+                )
 
                 # create tables in userland
                 engine = services.create_engine()

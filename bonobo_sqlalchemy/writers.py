@@ -23,7 +23,7 @@ class InsertOrUpdate(Configurable):
     table_name = Option(str, positional=True)  # type: str
     fetch_columns = Option(tuple, required=False, default=())  # type: tuple
     insert_only_fields = Option(tuple, required=False, default=())  # type: tuple
-    discriminant = Option(tuple, required=False, default=('id',))  # type: tuple
+    discriminant = Option(tuple, required=False, default=('id', ))  # type: tuple
     created_at_field = Option(str, required=False, default='created_at')  # type: str
     updated_at_field = Option(str, required=False, default='updated_at')  # type: str
     allowed_operations = Option(

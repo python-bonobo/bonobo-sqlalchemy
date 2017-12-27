@@ -1,4 +1,3 @@
-
 DATABASE_TYPE = 'postgres'
 
 DATABASE_NAME = 'example'

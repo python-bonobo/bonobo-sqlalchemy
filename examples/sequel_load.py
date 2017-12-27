@@ -15,10 +15,7 @@ def extract(context):
 
 def get_graph(**options):
     graph = bonobo.Graph()
-    graph.add_chain(
-        extract,
-        bonobo_sqlalchemy.InsertOrUpdate('example')
-    )
+    graph.add_chain(extract, bonobo_sqlalchemy.InsertOrUpdate('example'))
 
     return graph
 
