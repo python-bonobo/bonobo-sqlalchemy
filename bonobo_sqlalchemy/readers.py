@@ -1,8 +1,9 @@
-from bonobo.config import Option
+from bonobo.config import Option, use_context
 from bonobo.config.configurables import Configurable
 from bonobo.config.services import Service
 
 
+@use_context
 class Select(Configurable):
     """
     Reads data from a database using a SQL query and a limit-offset based pagination.
@@ -47,7 +48,7 @@ class Select(Configurable):
 
     engine = Service('sqlalchemy.engine', __doc__='Database connection (an sqlalchemy.engine).')  # type: str
 
-    def call(self, engine):
+    def __call__(self, context, *, engine):
         query = self.query.strip(' \n;')
 
         offset = 0
@@ -64,7 +65,9 @@ class Select(Configurable):
             if not len(results):
                 break
 
-            for row in results:
-                yield dict(row)
+            for i, row in enumerate(results):
+                if not i:
+                    context.set_output_fields(row.keys())
+                yield tuple(row)
 
             offset += 1

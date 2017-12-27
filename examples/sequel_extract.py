@@ -9,15 +9,15 @@ from bonobo.config import use_context
 @use_context
 def extract(context):
     context.set_output_fields(['id', 'value'])
-    for i in range(1000):
+    for i in range(100):
         yield i, 'value for {}'.format(i)
 
 
 def get_graph(**options):
     graph = bonobo.Graph()
     graph.add_chain(
-        extract,
-        bonobo_sqlalchemy.InsertOrUpdate('example')
+        bonobo_sqlalchemy.Select('SELECT * FROM example', limit=100),
+        bonobo.PrettyPrinter(),
     )
 
     return graph
