@@ -5,10 +5,11 @@
 /.cache
 /.coverage
 /.idea
+/.medikit-pipeline
 /.python*-*
 /.release
 /build
 /dist
+/docs/_build
 /htmlcov
 /pylint.html
-/docs/_build
