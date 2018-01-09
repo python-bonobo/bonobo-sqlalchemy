@@ -3,14 +3,6 @@ import sys
 
 import bonobo
 import bonobo_sqlalchemy
-from bonobo.config import use_context
-
-
-@use_context
-def extract(context):
-    context.set_output_fields(['id', 'value'])
-    for i in range(100):
-        yield i, 'value for {}'.format(i)
 
 
 def get_graph(**options):
