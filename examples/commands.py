@@ -2,7 +2,7 @@ import warnings
 from contextlib import contextmanager
 
 import bonobo
-from bonobo_sqlalchemy import logging
+import logging
 
 
 def _execute_sql(engine, sql):
