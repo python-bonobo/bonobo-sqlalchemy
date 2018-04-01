@@ -52,11 +52,15 @@ class Select(Configurable):
         query = self.query.strip(' \n;')
 
         offset = 0
+        max_limit = self.limit or self.pack_size
+
+        assert self.pack_size > 0, 'Pack size must be > 0 for now.'
+
         while not self.limit or offset * self.pack_size < self.limit:
             results = engine.execute(
                 '{query} LIMIT {limit}{offset}'.format(
                     query=query,
-                    limit=self.pack_size,
+                    limit=max(min(self.pack_size, max_limit - offset * self.pack_size), 0),
                     offset=' OFFSET {}'.format(offset * self.pack_size) if offset else ''
                 ),
                 use_labels=True
@@ -65,8 +69,8 @@ class Select(Configurable):
             if not len(results):
                 break
 
-            for i, row in enumerate(results):
-                if not i:
+            for row in results:
+                if not context.output_type:
                     context.set_output_fields(row.keys())
                 yield tuple(row)
 
