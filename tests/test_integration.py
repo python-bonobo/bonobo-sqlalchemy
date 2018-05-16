@@ -32,7 +32,8 @@ def create_docker_container_fixture(name, *, image=None, tag='latest', ports=Non
             image=full_image,
             labels=[LABEL],
             ports=[port for port in ports],
-            host_config=docker_client.create_host_config(port_bindings={port: None for port in ports})
+            host_config=docker_client.create_host_config(port_bindings={port: None
+                                                                        for port in ports})
         )
 
         try:
@@ -145,7 +146,10 @@ class Bufferize:
         self.buffer = []
 
     def __call__(self, *args, **kwargs):
-        self.buffer.append((args, kwargs,))
+        self.buffer.append((
+            args,
+            kwargs,
+        ))
 
 
 def test_postgres(postgres):
@@ -156,8 +160,10 @@ def test_postgres(postgres):
     wait_for_postgres(port)
     root_engine = create_root_engine(port)
     _execute_sql(root_engine, "CREATE ROLE my_user WITH LOGIN PASSWORD '';")
-    _execute_sql(root_engine,
-                 'CREATE DATABASE {name} WITH OWNER=my_user TEMPLATE=template0 ENCODING="utf-8"'.format(name=db_name))
+    _execute_sql(
+        root_engine,
+        'CREATE DATABASE {name} WITH OWNER=my_user TEMPLATE=template0 ENCODING="utf-8"'.format(name=db_name)
+    )
 
     engine = create_engine('my_user', db_name, port)
     metadata.create_all(engine)
@@ -165,26 +171,24 @@ def test_postgres(postgres):
     services = {'sqlalchemy.engine': engine}
 
     graph = bonobo.Graph()
-    graph.add_chain(
-        extract,
-        bonobo_sqlalchemy.InsertOrUpdate(TABLE_1)
-    )
+    graph.add_chain(extract, bonobo_sqlalchemy.InsertOrUpdate(TABLE_1))
     assert bonobo.run(graph, services=services)
 
     buf = Bufferize()
     graph = bonobo.Graph()
     graph.add_chain(
-        bonobo_sqlalchemy.Select('SELECT * FROM '+TABLE_1),
+        bonobo_sqlalchemy.Select('SELECT * FROM ' + TABLE_1),
         buf,
     )
     assert bonobo.run(graph, services=services)
-    assert buf.buffer == [((0, 'value for 0'), {}), ((1, 'value for 1'), {}), ((2, 'value for 2'), {}),
-                          ((3, 'value for 3'), {}), ((4, 'value for 4'), {}), ((5, 'value for 5'), {}),
-                          ((6, 'value for 6'), {}), ((7, 'value for 7'), {}), ((8, 'value for 8'), {}),
-                          ((9, 'value for 9'), {})]
+    assert buf.buffer == [
+        ((0, 'value for 0'), {}), ((1, 'value for 1'), {}), ((2, 'value for 2'), {}), ((3, 'value for 3'), {}),
+        ((4, 'value for 4'), {}), ((5, 'value for 5'), {}), ((6, 'value for 6'), {}), ((7, 'value for 7'), {}),
+        ((8, 'value for 8'), {}), ((9, 'value for 9'), {})
+    ]
 
     graph = bonobo.Graph(
-        bonobo_sqlalchemy.Select('SELECT * FROM '+TABLE_1),
+        bonobo_sqlalchemy.Select('SELECT * FROM ' + TABLE_1),
         bonobo_sqlalchemy.InsertOrUpdate(TABLE_2),
     )
     assert bonobo.run(graph, services=services)
@@ -192,11 +196,12 @@ def test_postgres(postgres):
     buf = Bufferize()
     graph = bonobo.Graph()
     graph.add_chain(
-        bonobo_sqlalchemy.Select('SELECT * FROM '+TABLE_2),
+        bonobo_sqlalchemy.Select('SELECT * FROM ' + TABLE_2),
         buf,
     )
     assert bonobo.run(graph, services=services)
-    assert buf.buffer == [((0, 'value for 0'), {}), ((1, 'value for 1'), {}), ((2, 'value for 2'), {}),
-                          ((3, 'value for 3'), {}), ((4, 'value for 4'), {}), ((5, 'value for 5'), {}),
-                          ((6, 'value for 6'), {}), ((7, 'value for 7'), {}), ((8, 'value for 8'), {}),
-                          ((9, 'value for 9'), {})]
+    assert buf.buffer == [
+        ((0, 'value for 0'), {}), ((1, 'value for 1'), {}), ((2, 'value for 2'), {}), ((3, 'value for 3'), {}),
+        ((4, 'value for 4'), {}), ((5, 'value for 5'), {}), ((6, 'value for 6'), {}), ((7, 'value for 7'), {}),
+        ((8, 'value for 8'), {}), ((9, 'value for 9'), {})
+    ]

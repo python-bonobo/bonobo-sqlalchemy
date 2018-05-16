@@ -5,9 +5,7 @@ import bonobo_sqlalchemy
 
 
 def get_services():
-    return {
-        'sqlalchemy.pgengine': sqlalchemy.create_engine('postgresql+psycopg2://@localhost:5432/example')
-    }
+    return {'sqlalchemy.pgengine': sqlalchemy.create_engine('postgresql+psycopg2://@localhost:5432/example')}
 
 
 def get_graph(**options):
@@ -22,7 +20,4 @@ def get_graph(**options):
 if __name__ == '__main__':
     parser = bonobo.get_argument_parser()
     with bonobo.parse_args(parser) as options:
-        bonobo.run(
-            get_graph(**options),
-            services=get_services(**options)
-        )
+        bonobo.run(get_graph(**options), services=get_services(**options))
