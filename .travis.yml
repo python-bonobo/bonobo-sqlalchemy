@@ -10,8 +10,7 @@ python:
   - nightly
 install:
   - make install-dev
-  - pip install coveralls
-  - pip install docker
+  - pip install coveralls docker psycopg2-binary
 script:
   - make clean test
 after_success:
