@@ -8,6 +8,7 @@ yapf = require('yapf')
 
 python.setup(
     name='bonobo_sqlalchemy',
+    python_requires='>=3.5',
     description='Bonobo SQLAlchemy Extension',
     license='Apache License, Version 2.0',
     url='https://www.bonobo-project.org/with/sqlalchemy',

@@ -5,6 +5,7 @@
 /.cache
 /.coverage
 /.idea
+/.medikit
 /.medikit-pipeline
 /.python*-*
 /.release

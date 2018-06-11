@@ -8,7 +8,7 @@ import bonobo_sqlalchemy
 def get_graph(**options):
     graph = bonobo.Graph()
     graph.add_chain(
-        bonobo_sqlalchemy.Select('SELECT * FROM example', limit=100),
+        bonobo_sqlalchemy.Select('SELECT * FROM example', limit=100, pack_size=9),
         bonobo.PrettyPrinter(),
     )
 
