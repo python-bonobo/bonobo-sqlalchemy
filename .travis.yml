@@ -8,6 +8,7 @@ python:
 install:
     - make install-dev
     - pip install coveralls
+    - pip install docker
 script:
     - make clean test
 after_success:
