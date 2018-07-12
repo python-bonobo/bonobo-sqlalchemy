@@ -48,6 +48,11 @@ class Select(Configurable):
 
     engine = Service('sqlalchemy.engine', __doc__='Database connection (an sqlalchemy.engine).')  # type: str
 
+    def formatter(self, context, index, row):
+        if not index:
+            context.set_output_fields(row.keys())
+        return tuple(row)
+
     def __call__(self, context, *, engine):
         query = self.query.strip(' \n;')
 
@@ -69,9 +74,7 @@ class Select(Configurable):
             if not len(results):
                 break
 
-            for row in results:
-                if not context.output_type:
-                    context.set_output_fields(row.keys())
-                yield tuple(row)
+            for i, row in enumerate(results):
+                yield self.formatter(context, i, row)
 
             offset += 1
