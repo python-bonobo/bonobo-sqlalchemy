@@ -75,6 +75,8 @@ class Select(Configurable):
                 break
 
             for i, row in enumerate(results):
-                yield self.formatter(context, i, row)
+                formatted_row = self.formatter(context, i, row)
+                if formatted_row:
+                    yield formatted_row
 
             offset += 1
