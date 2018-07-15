@@ -53,6 +53,10 @@ class Select(Configurable):
             context.set_output_fields(row.keys())
         return tuple(row)
 
+    @property
+    def parameters(self):
+        return {}
+
     def __call__(self, context, *, engine):
         query = self.query.strip(' \n;')
 
@@ -61,6 +65,8 @@ class Select(Configurable):
 
         assert self.pack_size > 0, 'Pack size must be > 0 for now.'
 
+        parameters = self.parameters
+
         while not self.limit or offset * self.pack_size < self.limit:
             results = engine.execute(
                 '{query} LIMIT {limit}{offset}'.format(
@@ -68,7 +74,8 @@ class Select(Configurable):
                     limit=max(min(self.pack_size, max_limit - offset * self.pack_size), 0),
                     offset=' OFFSET {}'.format(offset * self.pack_size) if offset else ''
                 ),
-                use_labels=True
+                parameters,
+                use_labels=True,
             ).fetchall()
 
             if not len(results):
