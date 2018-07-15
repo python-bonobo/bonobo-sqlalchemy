@@ -49,12 +49,30 @@ class Select(Configurable):
     engine = Service('sqlalchemy.engine', __doc__='Database connection (an sqlalchemy.engine).')  # type: str
 
     def formatter(self, context, index, row):
+        """
+        Formats a result row into whataver you need to send on this transformations' output stream.
+
+        :param context:
+        :param index:
+        :param row:
+
+        :return: mixed
+
+        """
         if not index:
             context.set_output_fields(row.keys())
         return tuple(row)
 
     @property
     def parameters(self):
+        """
+        Provide parameters for input query.
+
+        See https://www.python.org/dev/peps/pep-0249/#paramstyle
+
+        :return: dict
+
+        """
         return {}
 
     def __call__(self, context, *, engine):
