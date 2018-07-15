@@ -48,26 +48,64 @@ class Select(Configurable):
 
     engine = Service('sqlalchemy.engine', __doc__='Database connection (an sqlalchemy.engine).')  # type: str
 
+    def formatter(self, context, index, row):
+        """
+        Formats a result row into whataver you need to send on this transformations' output stream.
+
+        :param context:
+        :param index:
+        :param row:
+
+        :return: mixed
+
+        """
+        if not index:
+            context.set_output_fields(row.keys())
+        return tuple(row)
+
+    @property
+    def parameters(self):
+        """
+        Provide parameters for input query.
+
+        See https://www.python.org/dev/peps/pep-0249/#paramstyle
+
+        :return: dict
+
+        """
+        return {}
+
     def __call__(self, context, *, engine):
         query = self.query.strip(' \n;')
 
+        assert self.pack_size > 0, 'Pack size must be > 0 for now.'
+
         offset = 0
+        parameters = self.parameters
+
         while not self.limit or offset * self.pack_size < self.limit:
-            results = engine.execute(
-                '{query} LIMIT {limit}{offset}'.format(
-                    query=query,
-                    limit=self.pack_size,
-                    offset=' OFFSET {}'.format(offset * self.pack_size) if offset else ''
-                ),
-                use_labels=True
-            ).fetchall()
+            real_offset = offset * self.pack_size
+
+            if self.limit:
+                _limit = max(min(self.pack_size, self.limit - real_offset), 0)
+            else:
+                _limit = self.pack_size
+
+            # exit loop if we're gonna LIMIT 0
+            if not _limit:
+                break
+
+            _offset = real_offset and ' OFFSET {}'.format(real_offset) or ''
+            _query = '{query} LIMIT {limit}{offset}'.format(query=query, limit=_limit, offset=_offset)
+
+            results = engine.execute(_query, parameters, use_labels=True).fetchall()
 
             if not len(results):
                 break
 
             for i, row in enumerate(results):
-                if not i:
-                    context.set_output_fields(row.keys())
-                yield tuple(row)
+                formatted_row = self.formatter(context, real_offset + i, row)
+                if formatted_row:
+                    yield formatted_row
 
             offset += 1
