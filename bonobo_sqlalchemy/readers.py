@@ -78,29 +78,33 @@ class Select(Configurable):
     def __call__(self, context, *, engine):
         query = self.query.strip(' \n;')
 
-        offset = 0
-        max_limit = self.limit or self.pack_size
-
         assert self.pack_size > 0, 'Pack size must be > 0 for now.'
 
+        offset = 0
         parameters = self.parameters
 
         while not self.limit or offset * self.pack_size < self.limit:
-            results = engine.execute(
-                '{query} LIMIT {limit}{offset}'.format(
-                    query=query,
-                    limit=max(min(self.pack_size, max_limit - offset * self.pack_size), 0),
-                    offset=' OFFSET {}'.format(offset * self.pack_size) if offset else ''
-                ),
-                parameters,
-                use_labels=True,
-            ).fetchall()
+            real_offset = offset * self.pack_size
+
+            if self.limit:
+                _limit = max(min(self.pack_size, self.limit - real_offset), 0)
+            else:
+                _limit = self.pack_size
+
+            # exit loop if we're gonna LIMIT 0
+            if not _limit:
+                break
+
+            _offset = real_offset and ' OFFSET {}'.format(real_offset) or ''
+            _query = '{query} LIMIT {limit}{offset}'.format(query=query, limit=_limit, offset=_offset)
+
+            results = engine.execute(_query, parameters, use_labels=True).fetchall()
 
             if not len(results):
                 break
 
             for i, row in enumerate(results):
-                formatted_row = self.formatter(context, i, row)
+                formatted_row = self.formatter(context, real_offset + i, row)
                 if formatted_row:
                     yield formatted_row
 
