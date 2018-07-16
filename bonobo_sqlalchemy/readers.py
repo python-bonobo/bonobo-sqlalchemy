@@ -46,7 +46,6 @@ class Select(Configurable):
     query = Option(str, positional=True, default='SELECT 1', __doc__='The actual SQL query to run.')  # type: str
     pack_size = Option(int, required=False, default=1000, __doc__='How many rows to retrieve at once.')  # type: int
     limit = Option(int, required=False, __doc__='Maximum rows to retrieve, in total.')  # type: int
-
     engine = Service('sqlalchemy.engine', __doc__='Database connection (an sqlalchemy.engine).')  # type: str
 
     def set_output_fields(self, context, input_row, row):
@@ -114,7 +113,8 @@ class Select(Configurable):
             args = args + input_row
 
         sqlparams = {
-            **{str(i): v for i, v in enumerate(args)},
+            **{str(i): v
+               for i, v in enumerate(args)},
             **kwargs,
         }
 

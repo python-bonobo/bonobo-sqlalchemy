@@ -12,8 +12,8 @@ from bonobo.errors import UnrecoverableError
 from bonobo_sqlalchemy.constants import INSERT, UPDATE
 from bonobo_sqlalchemy.errors import ProhibitedOperationError
 
-
 logger = logging.getLogger(__name__)
+
 
 @use_context
 @use_raw_input
@@ -186,7 +186,6 @@ class InsertOrUpdate(Configurable):
             fields = list(row.keys())
 
         return set(candidates).intersection(fields)
-
 
     def add_fetch_columns(self, *columns, **aliased_columns):
         self.fetch_columns = {
