@@ -48,16 +48,21 @@ class Select(Configurable):
     limit = Option(int, required=False, __doc__='Maximum rows to retrieve, in total.')  # type: int
     engine = Service('sqlalchemy.engine', __doc__='Database connection (an sqlalchemy.engine).')  # type: str
 
-    def set_output_fields(self, context, input_row, row):
-        try:
-            _fields = input_row._fields
-        except AttributeError:
-            try:
-                _fields = input_row.keys()
-            except AttributeError:
-                _fields = range(len(input_row))
+    output_fields = Option(list, required=False, default=None)
 
-        context.set_output_fields([*_fields, *row.keys()])
+    def set_output_fields(self, context, input_row, row):
+        if self.output_fields:
+            context.set_output_fields(self.output_fields)
+        else:
+            try:
+                _fields = input_row._fields
+            except AttributeError:
+                try:
+                    _fields = input_row.keys()
+                except AttributeError:
+                    _fields = range(len(input_row))
+
+            context.set_output_fields([*_fields, *row.keys()])
 
     def formatter(self, input_row, row):
         """
@@ -143,6 +148,11 @@ class Select(Configurable):
                 if _formatted_row:
                     if not context.index:
                         self.set_output_fields(context, input_row, row)
+
+                    if len(_formatted_row) != len(context.get_output_fields()):
+                        raise ValueError('Formatted rows contains {} fields while context expects {!r}'.format(
+                            len(_formatted_row), context.get_output_fields()
+                        ))
                     yield _formatted_row
                     context.index += 1
 
