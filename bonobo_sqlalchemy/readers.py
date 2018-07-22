@@ -1,6 +1,7 @@
 from bonobo.config import Option, use_context, use_raw_input
 from bonobo.config.configurables import Configurable
 from bonobo.config.services import Service
+from bonobo.errors import UnrecoverableError
 
 
 @use_context
@@ -138,7 +139,10 @@ class Select(Configurable):
             _offset = real_offset and ' OFFSET {}'.format(real_offset) or ''
             _query = '{query} LIMIT {limit}{offset}'.format(query=query, limit=_limit, offset=_offset)
 
-            results = engine.execute(_query, **sqlparams, use_labels=True).fetchall()
+            try:
+                results = engine.execute(_query, **sqlparams, use_labels=True).fetchall()
+            except Exception as exc:
+                raise UnrecoverableError('Unable to execute query.') from exc
 
             if not len(results):
                 break

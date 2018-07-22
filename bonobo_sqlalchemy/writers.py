@@ -142,10 +142,9 @@ class InsertOrUpdate(Configurable):
         # Execute
         try:
             connection.execute(query)
-        except Exception:
-            logger.exception('Rollback...')
+        except Exception as exc:
             connection.rollback()
-            raise
+            raise UnrecoverableError('Unable to execute query.') from exc
 
         # Increment stats TODO
         # if dbrow:
@@ -168,7 +167,12 @@ class InsertOrUpdate(Configurable):
     def find(self, connection, table, row):
         sql = select([table]).where(and_(*(getattr(table.c, col) == row.get(col)
                                            for col in self.discriminant))).limit(1)
-        row = connection.execute(sql).fetchone()
+
+        try:
+            row = connection.execute(sql).fetchone()
+        except Exception as exc:
+            raise UnrecoverableError('Unable to execute query.') from exc
+
         return dict(row) if row else None
 
     def get_columns_for(self, column_names, row, dbrow=None):
