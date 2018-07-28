@@ -1,4 +1,5 @@
 import datetime
+import logging
 import traceback
 from queue import Queue
 
@@ -10,6 +11,8 @@ from bonobo.config import Configurable, ContextProcessor, Option, Service, use_c
 from bonobo.errors import UnrecoverableError
 from bonobo_sqlalchemy.constants import INSERT, UPDATE
 from bonobo_sqlalchemy.errors import ProhibitedOperationError
+
+logger = logging.getLogger(__name__)
 
 
 @use_context
@@ -68,8 +71,12 @@ class InsertOrUpdate(Configurable):
         :param connection: 
         """
         buffer = yield Queue()
-        for row in self.commit(table, connection, buffer, force=True):
-            context.send(row)
+        try:
+            for row in self.commit(table, connection, buffer, force=True):
+                context.send(row)
+        except Exception as exc:
+            logger.exception('Flush fail')
+            raise UnrecoverableError('Flushing query buffer failed.') from exc
 
     def __call__(self, connection, table, buffer, context, row, engine):
         """
@@ -80,7 +87,6 @@ class InsertOrUpdate(Configurable):
         :param buffer: 
         :param row: 
         """
-
         buffer.put(row)
 
         yield from self.commit(table, connection, buffer)
@@ -136,9 +142,9 @@ class InsertOrUpdate(Configurable):
         # Execute
         try:
             connection.execute(query)
-        except Exception:
+        except Exception as exc:
             connection.rollback()
-            raise
+            raise UnrecoverableError('Unable to execute query.') from exc
 
         # Increment stats TODO
         # if dbrow:
@@ -161,7 +167,12 @@ class InsertOrUpdate(Configurable):
     def find(self, connection, table, row):
         sql = select([table]).where(and_(*(getattr(table.c, col) == row.get(col)
                                            for col in self.discriminant))).limit(1)
-        row = connection.execute(sql).fetchone()
+
+        try:
+            row = connection.execute(sql).fetchone()
+        except Exception as exc:
+            raise UnrecoverableError('Unable to execute query.') from exc
+
         return dict(row) if row else None
 
     def get_columns_for(self, column_names, row, dbrow=None):
@@ -173,7 +184,12 @@ class InsertOrUpdate(Configurable):
         else:
             candidates = column_names
 
-        return set(candidates).intersection(row._fields)
+        try:
+            fields = row._fields
+        except AttributeError as exc:
+            fields = list(row.keys())
+
+        return set(candidates).intersection(fields)
 
     def add_fetch_columns(self, *columns, **aliased_columns):
         self.fetch_columns = {
