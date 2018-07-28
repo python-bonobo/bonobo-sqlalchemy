@@ -1,9 +1,11 @@
-from bonobo.config import Option, use_context
+from bonobo.config import Option, use_context, use_raw_input
 from bonobo.config.configurables import Configurable
 from bonobo.config.services import Service
+from bonobo.errors import UnrecoverableError
 
 
 @use_context
+@use_raw_input
 class Select(Configurable):
     """
     Reads data from a database using a SQL query and a limit-offset based pagination.
@@ -45,10 +47,25 @@ class Select(Configurable):
     query = Option(str, positional=True, default='SELECT 1', __doc__='The actual SQL query to run.')  # type: str
     pack_size = Option(int, required=False, default=1000, __doc__='How many rows to retrieve at once.')  # type: int
     limit = Option(int, required=False, __doc__='Maximum rows to retrieve, in total.')  # type: int
-
     engine = Service('sqlalchemy.engine', __doc__='Database connection (an sqlalchemy.engine).')  # type: str
 
-    def formatter(self, context, index, row):
+    output_fields = Option(list, required=False, default=None)
+
+    def set_output_fields(self, context, input_row, row):
+        if self.output_fields:
+            context.set_output_fields(self.output_fields)
+        else:
+            try:
+                _fields = input_row._fields
+            except AttributeError:
+                try:
+                    _fields = input_row.keys()
+                except AttributeError:
+                    _fields = range(len(input_row))
+
+            context.set_output_fields([*_fields, *row.keys()])
+
+    def formatter(self, input_row, row):
         """
         Formats a result row into whataver you need to send on this transformations' output stream.
 
@@ -59,14 +76,24 @@ class Select(Configurable):
         :return: mixed
 
         """
-        if not index:
-            context.set_output_fields(row.keys())
-        return tuple(row)
+        return input_row + tuple(row)
 
     @property
-    def parameters(self):
+    def args(self):
         """
-        Provide parameters for input query.
+        Provide positional parameters for input query.
+
+        See https://www.python.org/dev/peps/pep-0249/#paramstyle
+
+        :return: dict
+
+        """
+        return ()
+
+    @property
+    def kwargs(self):
+        """
+        Provide named parameters for input query.
 
         See https://www.python.org/dev/peps/pep-0249/#paramstyle
 
@@ -75,13 +102,27 @@ class Select(Configurable):
         """
         return {}
 
-    def __call__(self, context, *, engine):
+    def __call__(self, context, input_row, *, engine):
+        context.setdefault('index', 0)
+
         query = self.query.strip(' \n;')
 
         assert self.pack_size > 0, 'Pack size must be > 0 for now.'
 
         offset = 0
-        parameters = self.parameters
+
+        # prepare parameters for query...
+        args, kwargs = self.args, self.kwargs
+        try:
+            kwargs = {**kwargs, **input_row._asdict()}
+        except AttributeError:
+            args = args + input_row
+
+        sqlparams = {
+            **{str(i): v
+               for i, v in enumerate(args)},
+            **kwargs,
+        }
 
         while not self.limit or offset * self.pack_size < self.limit:
             real_offset = offset * self.pack_size
@@ -98,14 +139,25 @@ class Select(Configurable):
             _offset = real_offset and ' OFFSET {}'.format(real_offset) or ''
             _query = '{query} LIMIT {limit}{offset}'.format(query=query, limit=_limit, offset=_offset)
 
-            results = engine.execute(_query, parameters, use_labels=True).fetchall()
+            try:
+                results = engine.execute(_query, **sqlparams, use_labels=True).fetchall()
+            except Exception as exc:
+                raise UnrecoverableError('Unable to execute query.') from exc
 
             if not len(results):
                 break
 
-            for i, row in enumerate(results):
-                formatted_row = self.formatter(context, real_offset + i, row)
-                if formatted_row:
-                    yield formatted_row
+            for row in results:
+                _formatted_row = self.formatter(input_row, row)
+                if _formatted_row:
+                    if not context.index:
+                        self.set_output_fields(context, input_row, row)
+
+                    if len(_formatted_row) != len(context.get_output_fields()):
+                        raise ValueError('Formatted rows contains {} fields while context expects {!r}'.format(
+                            len(_formatted_row), context.get_output_fields()
+                        ))
+                    yield _formatted_row
+                    context.index += 1
 
             offset += 1
