@@ -95,10 +95,7 @@ class InsertOrUpdate(Configurable):
         if force or (buffer.qsize() >= self.buffer_size):
             with connection.begin():
                 while buffer.qsize() > 0:
-                    try:
-                        yield self.insert_or_update(table, connection, buffer.get())
-                    except Exception as exc:
-                        yield exc
+                    yield self.insert_or_update(table, connection, buffer.get())
 
     def insert_or_update(self, table, connection, row):
         """ Actual database load transformation logic, without the buffering / transaction logic. 
