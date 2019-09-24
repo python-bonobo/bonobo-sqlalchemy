@@ -23,21 +23,16 @@ class InsertOrUpdate(Configurable):
     Maybe the obvious choice is to keep "field" for row fields, as it's already the name used by bonobo, and call the
     database columns "columns".
     """
+
     table_name = Option(str, positional=True)  # type: str
-    fetch_columns = Option(tuple, required=False, default=())  # type: tuple
     insert_only_fields = Option(tuple, required=False, default=())  # type: tuple
-    discriminant = Option(tuple, required=False, default=('id', ))  # type: tuple
-    created_at_field = Option(str, required=False, default='created_at')  # type: str
-    updated_at_field = Option(str, required=False, default='updated_at')  # type: str
-    allowed_operations = Option(
-        tuple, required=False, default=(
-            INSERT,
-            UPDATE,
-        )
-    )  # type: tuple
+    discriminant = Option(tuple, required=False, default=("id",))  # type: tuple
+    created_at_field = Option(str, required=False, default="created_at")  # type: str
+    updated_at_field = Option(str, required=False, default="updated_at")  # type: str
+    allowed_operations = Option(tuple, required=False, default=(INSERT, UPDATE))  # type: tuple
     buffer_size = Option(int, required=False, default=1000)  # type: int
 
-    engine = Service('sqlalchemy.engine')  # type: str
+    engine = Service("sqlalchemy.engine")  # type: str
 
     @ContextProcessor
     def create_connection(self, context, *, engine):
@@ -50,8 +45,9 @@ class InsertOrUpdate(Configurable):
         try:
             connection = engine.connect()
         except OperationalError as exc:
-            raise UnrecoverableError('Could not create SQLAlchemy connection: {}.'.format(str(exc).replace('\n', ''))
-                                     ) from exc
+            raise UnrecoverableError(
+                "Could not create SQLAlchemy connection: {}.".format(str(exc).replace("\n", ""))
+            ) from exc
 
         with connection:
             yield connection
@@ -75,8 +71,8 @@ class InsertOrUpdate(Configurable):
             for row in self.commit(table, connection, buffer, force=True):
                 context.send(row)
         except Exception as exc:
-            logger.exception('Flush fail')
-            raise UnrecoverableError('Flushing query buffer failed.') from exc
+            logger.exception("Flush fail")
+            raise UnrecoverableError("Flushing query buffer failed.") from exc
 
     def __call__(self, connection, table, buffer, context, row, engine):
         """
@@ -119,17 +115,18 @@ class InsertOrUpdate(Configurable):
         # Update logic
         if dbrow:
             if not UPDATE in self.allowed_operations:
-                raise ProhibitedOperationError('UPDATE operations are not allowed by this transformation.')
+                raise ProhibitedOperationError("UPDATE operations are not allowed by this transformation.")
 
-            query = table.update().values(
-                **{col: row.get(col)
-                   for col in self.get_columns_for(column_names, row, dbrow)}
-            ).where(and_(*(getattr(table.c, col) == row.get(col) for col in self.discriminant)))
+            query = (
+                table.update()
+                .values(**{col: row.get(col) for col in self.get_columns_for(column_names, row, dbrow)})
+                .where(and_(*(getattr(table.c, col) == row.get(col) for col in self.discriminant)))
+            )
 
         # INSERT
         else:
             if not INSERT in self.allowed_operations:
-                raise ProhibitedOperationError('INSERT operations are not allowed by this transformation.')
+                raise ProhibitedOperationError("INSERT operations are not allowed by this transformation.")
 
             if self.created_at_field in column_names:
                 row[self.created_at_field] = now  # XXX UNPURE
@@ -144,7 +141,7 @@ class InsertOrUpdate(Configurable):
             connection.execute(query)
         except Exception as exc:
             connection.rollback()
-            raise UnrecoverableError('Unable to execute query.') from exc
+            raise UnrecoverableError("Unable to execute query.") from exc
 
         # Increment stats TODO
         # if dbrow:
@@ -152,26 +149,17 @@ class InsertOrUpdate(Configurable):
         # else:
         #    self._output._special_stats[INSERT] += 1
 
-        # If user required us to fetch some columns, let's query again to get their actual values.
-        if self.fetch_columns and len(self.fetch_columns):
-            if not dbrow:
-                dbrow = self.find(row)
-            if not dbrow:
-                raise ValueError('Could not find matching row after load.')
-
-            for alias, column in self.fetch_columns.items():
-                row[alias] = dbrow[column]
-
         return row
 
     def find(self, connection, table, row):
-        sql = select([table]).where(and_(*(getattr(table.c, col) == row.get(col)
-                                           for col in self.discriminant))).limit(1)
+        sql = (
+            select([table]).where(and_(*(getattr(table.c, col) == row.get(col) for col in self.discriminant))).limit(1)
+        )
 
         try:
             row = connection.execute(sql).fetchone()
         except Exception as exc:
-            raise UnrecoverableError('Unable to execute query.') from exc
+            raise UnrecoverableError("Unable to execute query.") from exc
 
         return dict(row) if row else None
 
@@ -192,10 +180,7 @@ class InsertOrUpdate(Configurable):
         return set(candidates).intersection(fields)
 
     def add_fetch_columns(self, *columns, **aliased_columns):
-        self.fetch_columns = {
-            **self.fetch_columns,
-            **aliased_columns,
-        }
+        self.fetch_columns = {**self.fetch_columns, **aliased_columns}
 
         for column in columns:
             self.fetch_columns[column] = column

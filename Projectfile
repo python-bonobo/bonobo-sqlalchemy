@@ -2,26 +2,24 @@
 
 from medikit import require
 
-pytest = require('pytest')
-python = require('python')
-yapf = require('yapf')
+bonobo_version = "==0.7.0rc3"
 
-python.setup(
-    name='bonobo_sqlalchemy',
-    python_requires='>=3.5',
-    description='Bonobo SQLAlchemy Extension',
-    license='Apache License, Version 2.0',
-    url='https://www.bonobo-project.org/with/sqlalchemy',
-    download_url='https://github.com/python-bonobo/bonobo-sqlalchemy/tarball/{version}',
-    author='Romain Dorgueil',
-    author_email='romain@dorgueil.net',
-)
+require("format")
+require("pytest")
 
-bonobo_version = '~= 0.6.0'
-python.add_requirements(
-    'bonobo ' + bonobo_version,
-    'SQLAlchemy ~=1.2',
-    dev=['bonobo[dev] ' + bonobo_version],
-)
+with require("python") as python:
+    python.setup(
+        name="bonobo_sqlalchemy",
+        python_requires=">=3.5",
+        description="Bonobo SQLAlchemy Extension",
+        license="Apache License, Version 2.0",
+        url="https://www.bonobo-project.org/with/sqlalchemy",
+        download_url="https://github.com/python-bonobo/bonobo-sqlalchemy/tarball/{version}",
+        author="Romain Dorgueil",
+        author_email="romain@dorgueil.net",
+    )
+
+    python.add_requirements("bonobo " + bonobo_version, "SQLAlchemy ~=1.2", dev=["bonobo[dev] " + bonobo_version])
+
 
 # vim: ft=python:

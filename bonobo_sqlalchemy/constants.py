@@ -1,5 +1,5 @@
-from bonobo.constants import Token
+from bonobo.structs.tokens import Token
 
-SELECT = Token('Select')
-INSERT = Token('Insert')
-UPDATE = Token('Update')
+SELECT = Token("Select")
+INSERT = Token("Insert")
+UPDATE = Token("Update")

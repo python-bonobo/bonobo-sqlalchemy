@@ -44,10 +44,11 @@ class Select(Configurable):
         COMMIT;
 
     """
-    query = Option(str, positional=True, default='SELECT 1', __doc__='The actual SQL query to run.')  # type: str
-    pack_size = Option(int, required=False, default=1000, __doc__='How many rows to retrieve at once.')  # type: int
-    limit = Option(int, required=False, __doc__='Maximum rows to retrieve, in total.')  # type: int
-    engine = Service('sqlalchemy.engine', __doc__='Database connection (an sqlalchemy.engine).')  # type: str
+
+    query = Option(str, positional=True, default="SELECT 1", __doc__="The actual SQL query to run.")  # type: str
+    pack_size = Option(int, required=False, default=1000, __doc__="How many rows to retrieve at once.")  # type: int
+    limit = Option(int, required=False, __doc__="Maximum rows to retrieve, in total.")  # type: int
+    engine = Service("sqlalchemy.engine", __doc__="Database connection (an sqlalchemy.engine).")  # type: str
 
     output_fields = Option(list, required=False, default=None)
 
@@ -103,11 +104,11 @@ class Select(Configurable):
         return {}
 
     def __call__(self, context, input_row, *, engine):
-        context.setdefault('index', 0)
+        context.setdefault("index", 0)
 
-        query = self.query.strip(' \n;')
+        query = self.query.strip(" \n;")
 
-        assert self.pack_size > 0, 'Pack size must be > 0 for now.'
+        assert self.pack_size > 0, "Pack size must be > 0 for now."
 
         offset = 0
 
@@ -118,11 +119,7 @@ class Select(Configurable):
         except AttributeError:
             args = args + input_row
 
-        sqlparams = {
-            **{str(i): v
-               for i, v in enumerate(args)},
-            **kwargs,
-        }
+        sqlparams = {**{str(i): v for i, v in enumerate(args)}, **kwargs}
 
         while not self.limit or offset * self.pack_size < self.limit:
             real_offset = offset * self.pack_size
@@ -136,13 +133,13 @@ class Select(Configurable):
             if not _limit:
                 break
 
-            _offset = real_offset and ' OFFSET {}'.format(real_offset) or ''
-            _query = '{query} LIMIT {limit}{offset}'.format(query=query, limit=_limit, offset=_offset)
+            _offset = real_offset and " OFFSET {}".format(real_offset) or ""
+            _query = "{query} LIMIT {limit}{offset}".format(query=query, limit=_limit, offset=_offset)
 
             try:
                 results = engine.execute(_query, **sqlparams, use_labels=True).fetchall()
             except Exception as exc:
-                raise UnrecoverableError('Unable to execute query.') from exc
+                raise UnrecoverableError("Unable to execute query.") from exc
 
             if not len(results):
                 break
@@ -154,9 +151,11 @@ class Select(Configurable):
                         self.set_output_fields(context, input_row, row)
 
                     if len(_formatted_row) != len(context.get_output_fields()):
-                        raise ValueError('Formatted rows contains {} fields while context expects {!r}'.format(
-                            len(_formatted_row), context.get_output_fields()
-                        ))
+                        raise ValueError(
+                            "Formatted rows contains {} fields while context expects {!r}".format(
+                                len(_formatted_row), context.get_output_fields()
+                            )
+                        )
                     yield _formatted_row
                     context.index += 1
 
