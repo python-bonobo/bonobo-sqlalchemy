@@ -21,7 +21,7 @@ graphviz==0.8.3
 idna==2.6
 imagesize==1.0.0
 jinja2-time==0.2.0
-jinja2==2.10
+jinja2==2.11.3
 markupsafe==1.0
 mondrian==0.7.0
 more-itertools==4.2.0
