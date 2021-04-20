@@ -30,7 +30,7 @@ pbr==4.0.4
 pluggy==0.6.0
 poyo==0.4.1
 psutil==5.4.6
-py==1.5.3
+py==1.10.0
 pygments==2.2.0
 pyparsing==2.2.0
 pytest-cov==2.5.1
