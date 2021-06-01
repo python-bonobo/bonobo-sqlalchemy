@@ -48,7 +48,7 @@ sphinxcontrib-websupport==1.1.0
 stevedore==1.28.0
 typing==3.6.4
 unidecode==1.0.22
-urllib3==1.22
+urllib3==1.26.5
 whichcraft==0.4.1
 whistle==1.0.1
 yapf==0.22.0
